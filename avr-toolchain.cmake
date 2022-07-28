@@ -82,15 +82,8 @@ function(setup_avr_executable FIRMWARE)
     set_target_properties(${FIRMWARE} PROPERTIES OUTPUT_NAME ${FIRMWARE}.elf)
 
     add_custom_command(TARGET ${FIRMWARE} POST_BUILD
-        COMMAND ${TOOL_SIZE} ARGS ${TOOL_SIZE_ARGS} ${FIRMWARE}.elf
-        VERBATIM)
-
-    add_custom_command(TARGET ${FIRMWARE} POST_BUILD
+        COMMAND "${TOOL_SIZE};${TOOL_SIZE_ARGS};${FIRMWARE}.elf"
         COMMAND "$<$<CONFIG:release,minsizerel>:${TOOL_STRIP};${FIRMWARE}.elf>"
-        COMMAND_EXPAND_LISTS
-        )
-
-    add_custom_command(TARGET ${FIRMWARE} POST_BUILD
         COMMAND "${CMAKE_OBJCOPY};-R .eeprom -O ihex;${FIRMWARE}.elf;${FIRMWARE}.hex"
         COMMAND_EXPAND_LISTS
         )
