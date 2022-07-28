@@ -42,6 +42,9 @@ function(add_avr_target FIRMWARE)
         DEPENDS ${FIRMWARE}
         )
 
+    add_custom_target(dump_eeprom ${TOOL_UPLOAD} ${TOOL_UPLOAD_ARGS} -p ${AVR_MCU} -U eeprom:r:${FIRMWARE}.bin:r
+        )
+
     add_custom_target(fuses ${TOOL_UPLOAD} ${TOOL_UPLOAD_ARGS} -p ${AVR_MCU} -U lfuse:w:${AVR_FUSE_L}:m -U hfuse:w:${AVR_FUSE_H}:m -U efuse:w:${AVR_FUSE_E}:m -U lock:w:${AVR_LOCKBIT}:m
         )
 
