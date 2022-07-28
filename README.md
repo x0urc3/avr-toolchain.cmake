@@ -1,6 +1,12 @@
 # avr-toolchain.cmake
 Modern CMake (3.21+) toolchain file for AVR microcontroller. This toolchain file make use of GNU and open source AVR project i.e. avr-gcc, avr-libc and avrdude
 
+## Features
+1. Support multiple executable targets i.e. client/server or unit test
+2. Custom targets to upload, read/write AVR fuse and read/write EEPROM
+3. Stripped binary with ```Release``` and ```MinSizeRel``` build type
+4. Support [avrunit](https://github.com/x0urc3/avrunit) testing framework
+
 # Usage
 
 A simple project is provided in [example](./example) directory. Do the following to compile and upload to the target microcontroller.
