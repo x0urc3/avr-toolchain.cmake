@@ -28,12 +28,14 @@ find_program(TOOL_SIZE avr-size REQUIRED DOC "Set binary size tool. Default: avr
 find_program(TOOL_STRIP avr-strip REQUIRED DOC "Set binary strip tool. Default: avr-strip")
 
 function(add_avr_target FIRMWARE)
-    if(TARGET upload)
-        return()
+    if(CMAKE_BINARY_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
+        set(NAME_UPLOAD upload)
+    else()
+        set(NAME_UPLOAD upload_${FIRMWARE})
     endif()
 
-    add_custom_target(upload
-        ALL ${TOOL_UPLOAD} ${TOOL_UPLOAD_ARGS} -p ${AVR_MCU} -U flash:w:${FIRMWARE}.hex
+    add_custom_target(${NAME_UPLOAD}
+        ${TOOL_UPLOAD} ${TOOL_UPLOAD_ARGS} -p ${AVR_MCU} -U flash:w:${FIRMWARE}.hex
         DEPENDS ${FIRMWARE}
         )
 
