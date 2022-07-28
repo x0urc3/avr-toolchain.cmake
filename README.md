@@ -1,26 +1,26 @@
 # avr-toolchain.cmake
-Modern CMake (3.21+) toolchain file for AVR microcontroller. This toolchain file depends on GNU and open source AVR project i.e. avr-gcc, avr-libc and avrdude
+Modern CMake (3.21+) toolchain file for AVR microcontroller. This toolchain file make use of GNU and open source AVR project i.e. avr-gcc, avr-libc and avrdude
 
 # Usage
 
 A simple project is provided in [example](./example) directory. Do the following to compile and upload to the target microcontroller.
 
 ```console
-$> cd example
-$> cmake -S . -B build --toolchain ../avr-toolchain.cmake
-$> cmake --build build
+cd example
+cmake -S . -B build --toolchain ../avr-toolchain.cmake
+cmake --build build
 ```
 
 Project configuration settings include the target microcontroller type (-mmcu), frequency (-DF_CPU) and avrdude arguments. Edit the ```CMakeCache.txt``` file or use any CMake project configuration tool. 
 
 ```console
-$> ccmake build
+ccmake build
 ```
 
 Useful commands has been added as custom target. These includes dumping EEPROM content, programming AVR fuse and bitlock. The list of target provides all available commands.
 
 ```console
-$> cmake --build build --target help
+cmake --build build --target help
 ```
 
 # To Do
