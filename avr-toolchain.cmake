@@ -34,9 +34,6 @@ function(add_avr_target FIRMWARE)
         DEPENDS ${FIRMWARE}
         )
 
-    add_custom_target(dump_eeprom ${TOOL_UPLOAD} ${TOOL_UPLOAD_ARGS} -p ${AVR_MCU} -U eeprom:r:${FIRMWARE}.bin:r
-        )
-
     add_custom_target(fuses ${TOOL_UPLOAD} ${TOOL_UPLOAD_ARGS} -p ${AVR_MCU} -U lfuse:w:${AVR_FUSE_L}:m -U hfuse:w:${AVR_FUSE_H}:m -U efuse:w:${AVR_FUSE_E}:m -U lock:w:${AVR_LOCKBIT}:m
         )
 
@@ -82,13 +79,19 @@ function(setup_avr_executable FIRMWARE)
 
     if(CMAKE_BINARY_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
         set(NAME_UPLOAD upload)
+        set(NAME_DUMP_EEPROM dump_eeprom)
     else()
         set(NAME_UPLOAD upload_${FIRMWARE})
+        set(NAME_DUMP_EEPROM dump_eeprom_${FIRMWARE})
     endif()
 
     add_custom_target(${NAME_UPLOAD}
         ${TOOL_UPLOAD} ${TOOL_UPLOAD_ARGS} -p ${AVR_MCU} -U flash:w:${FIRMWARE}.hex
         DEPENDS ${FIRMWARE}
+        )
+
+    add_custom_target(${NAME_DUMP_EEPROM}
+        ${TOOL_UPLOAD} ${TOOL_UPLOAD_ARGS} -p ${AVR_MCU} -U eeprom:r:${FIRMWARE}.bin:r
         )
 
     if(CMAKE_BINARY_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
