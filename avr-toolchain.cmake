@@ -28,18 +28,13 @@ find_program(TOOL_SIZE avr-size REQUIRED DOC "Set binary size tool. Default: avr
 find_program(TOOL_STRIP avr-strip REQUIRED DOC "Set binary strip tool. Default: avr-strip")
 
 function(add_avr_target FIRMWARE)
-    if(TARGET hex)
+    if(TARGET upload)
         return()
     endif()
 
-    add_custom_target(hex
-        ALL ${CMAKE_OBJCOPY} -R .eeprom -O ihex ${FIRMWARE}.elf ${FIRMWARE}.hex
-        DEPENDS ${FIRMWARE}
-        )
-
     add_custom_target(upload
         ALL ${TOOL_UPLOAD} ${TOOL_UPLOAD_ARGS} -p ${AVR_MCU} -U flash:w:${FIRMWARE}.hex
-        DEPENDS hex
+        DEPENDS ${FIRMWARE}
         )
 
     add_custom_target(eeprom ${CMAKE_OBJCOPY} -j .eeprom  --set-section-flags=.eeprom="alloc,load" --change-section-lma .eeprom=0 -O ihex ${FIRMWARE}.elf ${FIRMWARE}.eep
@@ -92,6 +87,11 @@ function(setup_avr_executable FIRMWARE)
 
     add_custom_command(TARGET ${FIRMWARE} POST_BUILD
         COMMAND "$<$<CONFIG:release,minsizerel>:${TOOL_STRIP};${FIRMWARE}.elf>"
+        COMMAND_EXPAND_LISTS
+        )
+
+    add_custom_command(TARGET ${FIRMWARE} POST_BUILD
+        COMMAND "${CMAKE_OBJCOPY};-R .eeprom -O ihex;${FIRMWARE}.elf;${FIRMWARE}.hex"
         COMMAND_EXPAND_LISTS
         )
 
