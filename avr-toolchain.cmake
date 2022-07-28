@@ -37,12 +37,9 @@ function(add_avr_target FIRMWARE)
         DEPENDS ${FIRMWARE}
         )
 
-    add_custom_target(eeprom ${CMAKE_OBJCOPY} -j .eeprom  --set-section-flags=.eeprom="alloc,load" --change-section-lma .eeprom=0 -O ihex ${FIRMWARE}.elf ${FIRMWARE}.eep
+    add_custom_target(upload_eeprom ${CMAKE_OBJCOPY} -j .eeprom  --set-section-flags=.eeprom="alloc,load" --change-section-lma .eeprom=0 -O ihex ${FIRMWARE}.elf ${FIRMWARE}.eep
+        COMMAND ${TOOL_UPLOAD} ${TOOL_UPLOAD_ARGS} -p ${AVR_MCU} -U eeprom:w:${FIRMWARE}.eep
         DEPENDS ${FIRMWARE}
-        )
-
-    add_custom_target(uploadeep ${TOOL_UPLOAD} ${TOOL_UPLOAD_ARGS} -p ${AVR_MCU} -U eeprom:w:${FIRMWARE}.eep
-        DEPENDS eeprom
         )
 
     add_custom_target(fuses ${TOOL_UPLOAD} ${TOOL_UPLOAD_ARGS} -p ${AVR_MCU} -U lfuse:w:${AVR_FUSE_L}:m -U hfuse:w:${AVR_FUSE_H}:m -U efuse:w:${AVR_FUSE_E}:m -U lock:w:${AVR_LOCKBIT}:m
