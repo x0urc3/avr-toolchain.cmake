@@ -68,38 +68,42 @@ function(setup_avr_target FIRMWARE)
         -fuse-linker-plugin
         )
 
-    set_target_properties(${FIRMWARE} PROPERTIES OUTPUT_NAME ${FIRMWARE}.elf)
+    get_target_property(target_type ${FIRMWARE} TYPE)
+    if (target_type STREQUAL "EXECUTABLE")
 
-    add_custom_command(TARGET ${FIRMWARE} POST_BUILD
-        COMMAND "${TOOL_SIZE};${TOOL_SIZE_ARGS};${FIRMWARE}.elf"
-        COMMAND "$<$<CONFIG:release,minsizerel>:${TOOL_STRIP};${FIRMWARE}.elf>"
-        COMMAND "${CMAKE_OBJCOPY};-R .eeprom -O ihex;${FIRMWARE}.elf;${FIRMWARE}.hex"
-        COMMAND_EXPAND_LISTS
-        )
+        set_target_properties(${FIRMWARE} PROPERTIES OUTPUT_NAME ${FIRMWARE}.elf)
 
-    if(CMAKE_BINARY_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
-        set(NAME_UPLOAD upload)
-        set(NAME_DUMP_EEPROM dump_eeprom)
-    else()
-        set(NAME_UPLOAD upload_${FIRMWARE})
-        set(NAME_DUMP_EEPROM dump_eeprom_${FIRMWARE})
+        add_custom_command(TARGET ${FIRMWARE} POST_BUILD
+            COMMAND "${TOOL_SIZE};${TOOL_SIZE_ARGS};${FIRMWARE}.elf"
+            COMMAND "$<$<CONFIG:release,minsizerel>:${TOOL_STRIP};${FIRMWARE}.elf>"
+            COMMAND "${CMAKE_OBJCOPY};-R .eeprom -O ihex;${FIRMWARE}.elf;${FIRMWARE}.hex"
+            COMMAND_EXPAND_LISTS
+            )
+
+        if(CMAKE_BINARY_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
+            set(NAME_UPLOAD upload)
+            set(NAME_DUMP_EEPROM dump_eeprom)
+        else()
+            set(NAME_UPLOAD upload_${FIRMWARE})
+            set(NAME_DUMP_EEPROM dump_eeprom_${FIRMWARE})
+        endif()
+
+        add_custom_target(${NAME_UPLOAD}
+            ${TOOL_UPLOAD} ${TOOL_UPLOAD_ARGS} -p ${AVR_MCU} -U flash:w:${FIRMWARE}.hex
+            DEPENDS ${FIRMWARE}
+            )
+
+        add_custom_target(${NAME_DUMP_EEPROM}
+            ${TOOL_UPLOAD} ${TOOL_UPLOAD_ARGS} -p ${AVR_MCU} -U eeprom:r:${FIRMWARE}.bin:r
+            )
+
+        if(CMAKE_BINARY_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
+            add_avr_custom_target(${FIRMWARE})
+        endif()
+
+        set_directory_properties(
+            PROPERTIES ADDITIONAL_CLEAN_FILES "${FIRMWARE}.hex;${FIRMWARE}.eep;${FIRMWARE}.bin"
+            )
     endif()
-
-    add_custom_target(${NAME_UPLOAD}
-        ${TOOL_UPLOAD} ${TOOL_UPLOAD_ARGS} -p ${AVR_MCU} -U flash:w:${FIRMWARE}.hex
-        DEPENDS ${FIRMWARE}
-        )
-
-    add_custom_target(${NAME_DUMP_EEPROM}
-        ${TOOL_UPLOAD} ${TOOL_UPLOAD_ARGS} -p ${AVR_MCU} -U eeprom:r:${FIRMWARE}.bin:r
-        )
-
-    if(CMAKE_BINARY_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
-        add_avr_custom_target(${FIRMWARE})
-    endif()
-
-    set_directory_properties(
-        PROPERTIES ADDITIONAL_CLEAN_FILES "${FIRMWARE}.hex;${FIRMWARE}.eep;${FIRMWARE}.bin"
-        )
 
 endfunction()
