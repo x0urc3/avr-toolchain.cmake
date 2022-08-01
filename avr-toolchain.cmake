@@ -23,11 +23,12 @@ find_program(CMAKE_C_COMPILER avr-gcc REQUIRED)
 #    message(FATAL_ERROR "GCC version must be at least 7.3!")
 #endif()
 find_program(CMAKE_CXX_COMPILER avr-g++ REQUIRED)
+find_program(CMAKE_AR avr-gcc-ar REQUIRED)
 find_program(TOOL_UPLOAD avrdude REQUIRED DOC "Set AVR upload tool. Default: avrdude")
 find_program(TOOL_SIZE avr-size REQUIRED DOC "Set binary size tool. Default: avr-size")
 find_program(TOOL_STRIP avr-strip REQUIRED DOC "Set binary strip tool. Default: avr-strip")
 
-function(add_avr_target FIRMWARE)
+function(add_avr_custom_target FIRMWARE)
 
     add_custom_target(upload_eeprom ${CMAKE_OBJCOPY} -j .eeprom  --set-section-flags=.eeprom="alloc,load" --change-section-lma .eeprom=0 -O ihex ${FIRMWARE}.elf ${FIRMWARE}.eep
         COMMAND ${TOOL_UPLOAD} ${TOOL_UPLOAD_ARGS} -p ${AVR_MCU} -U eeprom:w:${FIRMWARE}.eep
@@ -43,9 +44,9 @@ function(add_avr_target FIRMWARE)
     add_custom_target(avrdude_terminal ${TOOL_UPLOAD} ${TOOL_UPLOAD_ARGS} -p ${AVR_MCU} -t
         )
 
-endfunction(add_avr_target)
+endfunction()
 
-function(setup_avr_executable FIRMWARE)
+function(setup_avr_target FIRMWARE)
     target_compile_definitions(${FIRMWARE} PRIVATE
         -DF_CPU=${AVR_MCU_F}
         -DBAUD=${AVR_BAUD}
@@ -68,38 +69,42 @@ function(setup_avr_executable FIRMWARE)
         -fuse-linker-plugin
         )
 
-    set_target_properties(${FIRMWARE} PROPERTIES OUTPUT_NAME ${FIRMWARE}.elf)
+    get_target_property(target_type ${FIRMWARE} TYPE)
+    if (target_type STREQUAL "EXECUTABLE")
 
-    add_custom_command(TARGET ${FIRMWARE} POST_BUILD
-        COMMAND "${TOOL_SIZE};${TOOL_SIZE_ARGS};${FIRMWARE}.elf"
-        COMMAND "$<$<CONFIG:release,minsizerel>:${TOOL_STRIP};${FIRMWARE}.elf>"
-        COMMAND "${CMAKE_OBJCOPY};-R .eeprom -O ihex;${FIRMWARE}.elf;${FIRMWARE}.hex"
-        COMMAND_EXPAND_LISTS
-        )
+        set_target_properties(${FIRMWARE} PROPERTIES OUTPUT_NAME ${FIRMWARE}.elf)
 
-    if(CMAKE_BINARY_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
-        set(NAME_UPLOAD upload)
-        set(NAME_DUMP_EEPROM dump_eeprom)
-    else()
-        set(NAME_UPLOAD upload_${FIRMWARE})
-        set(NAME_DUMP_EEPROM dump_eeprom_${FIRMWARE})
+        add_custom_command(TARGET ${FIRMWARE} POST_BUILD
+            COMMAND "${TOOL_SIZE};${TOOL_SIZE_ARGS};${FIRMWARE}.elf"
+            COMMAND "$<$<CONFIG:release,minsizerel>:${TOOL_STRIP};${FIRMWARE}.elf>"
+            COMMAND "${CMAKE_OBJCOPY};-R .eeprom -O ihex;${FIRMWARE}.elf;${FIRMWARE}.hex"
+            COMMAND_EXPAND_LISTS
+            )
+
+        if(CMAKE_BINARY_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
+            set(NAME_UPLOAD upload)
+            set(NAME_DUMP_EEPROM dump_eeprom)
+        else()
+            set(NAME_UPLOAD upload_${FIRMWARE})
+            set(NAME_DUMP_EEPROM dump_eeprom_${FIRMWARE})
+        endif()
+
+        add_custom_target(${NAME_UPLOAD}
+            ${TOOL_UPLOAD} ${TOOL_UPLOAD_ARGS} -p ${AVR_MCU} -U flash:w:${FIRMWARE}.hex
+            DEPENDS ${FIRMWARE}
+            )
+
+        add_custom_target(${NAME_DUMP_EEPROM}
+            ${TOOL_UPLOAD} ${TOOL_UPLOAD_ARGS} -p ${AVR_MCU} -U eeprom:r:${FIRMWARE}.bin:r
+            )
+
+        if(CMAKE_BINARY_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
+            add_avr_custom_target(${FIRMWARE})
+        endif()
+
+        set_directory_properties(
+            PROPERTIES ADDITIONAL_CLEAN_FILES "${FIRMWARE}.hex;${FIRMWARE}.eep;${FIRMWARE}.bin"
+            )
     endif()
 
-    add_custom_target(${NAME_UPLOAD}
-        ${TOOL_UPLOAD} ${TOOL_UPLOAD_ARGS} -p ${AVR_MCU} -U flash:w:${FIRMWARE}.hex
-        DEPENDS ${FIRMWARE}
-        )
-
-    add_custom_target(${NAME_DUMP_EEPROM}
-        ${TOOL_UPLOAD} ${TOOL_UPLOAD_ARGS} -p ${AVR_MCU} -U eeprom:r:${FIRMWARE}.bin:r
-        )
-
-    if(CMAKE_BINARY_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
-        add_avr_target(${FIRMWARE})
-    endif()
-
-    set_directory_properties(
-        PROPERTIES ADDITIONAL_CLEAN_FILES "${FIRMWARE}.hex;${FIRMWARE}.eep;${FIRMWARE}.bin"
-        )
-
-endfunction(setup_avr_executable)
+endfunction()
