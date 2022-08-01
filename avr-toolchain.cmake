@@ -27,7 +27,7 @@ find_program(TOOL_UPLOAD avrdude REQUIRED DOC "Set AVR upload tool. Default: avr
 find_program(TOOL_SIZE avr-size REQUIRED DOC "Set binary size tool. Default: avr-size")
 find_program(TOOL_STRIP avr-strip REQUIRED DOC "Set binary strip tool. Default: avr-strip")
 
-function(add_avr_target FIRMWARE)
+function(add_avr_custom_target FIRMWARE)
 
     add_custom_target(upload_eeprom ${CMAKE_OBJCOPY} -j .eeprom  --set-section-flags=.eeprom="alloc,load" --change-section-lma .eeprom=0 -O ihex ${FIRMWARE}.elf ${FIRMWARE}.eep
         COMMAND ${TOOL_UPLOAD} ${TOOL_UPLOAD_ARGS} -p ${AVR_MCU} -U eeprom:w:${FIRMWARE}.eep
@@ -43,9 +43,9 @@ function(add_avr_target FIRMWARE)
     add_custom_target(avrdude_terminal ${TOOL_UPLOAD} ${TOOL_UPLOAD_ARGS} -p ${AVR_MCU} -t
         )
 
-endfunction(add_avr_target)
+endfunction()
 
-function(setup_avr_executable FIRMWARE)
+function(setup_avr_target FIRMWARE)
     target_compile_definitions(${FIRMWARE} PRIVATE
         -DF_CPU=${AVR_MCU_F}
         -DBAUD=${AVR_BAUD}
@@ -95,11 +95,11 @@ function(setup_avr_executable FIRMWARE)
         )
 
     if(CMAKE_BINARY_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
-        add_avr_target(${FIRMWARE})
+        add_avr_custom_target(${FIRMWARE})
     endif()
 
     set_directory_properties(
         PROPERTIES ADDITIONAL_CLEAN_FILES "${FIRMWARE}.hex;${FIRMWARE}.eep;${FIRMWARE}.bin"
         )
 
-endfunction(setup_avr_executable)
+endfunction()
