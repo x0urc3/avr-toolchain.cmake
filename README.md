@@ -6,6 +6,7 @@ Modern CMake (3.21+) toolchain file for AVR microcontroller. This toolchain file
 2. Custom targets to upload, read/write AVR fuse and read/write EEPROM
 3. Stripped binary with ```Release``` and ```MinSizeRel``` build type
 4. Support [avrunit](https://github.com/x0urc3/avrunit) testing framework
+5. Custom configuration for Arduino based board
 
 # Usage
 
@@ -28,9 +29,6 @@ Useful commands has been added as custom target. These includes dumping EEPROM c
 ```console
 cmake --build build --target help
 ```
-
-# To Do
-1. Add wrapper function for add_library()
 
 # Alternatives
 1. [mkleemann/cmake-avr](https://github.com/mkleemann/cmake-avr)
