@@ -48,6 +48,10 @@ find_program(TOOL_UPLOAD avrdude REQUIRED DOC "Set AVR upload tool. Default: avr
 find_program(TOOL_SIZE avr-size REQUIRED DOC "Set binary size tool. Default: avr-size")
 find_program(TOOL_STRIP avr-strip REQUIRED DOC "Set binary strip tool. Default: avr-strip")
 
+set(CMAKE_BUILD_TYPE "minsizerel" CACHE STRING "Type of build")
+set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "minsizerel" "debug")
+
+
 function(add_avr_custom_target FIRMWARE)
 
     add_custom_target(upload_eeprom ${CMAKE_OBJCOPY} -j .eeprom  --set-section-flags=.eeprom="alloc,load" --change-section-lma .eeprom=0 -O ihex ${FIRMWARE}.elf ${FIRMWARE}.eep
@@ -79,7 +83,6 @@ function(setup_avr_target FIRMWARE)
 
     target_compile_options(${FIRMWARE} PRIVATE
         -mmcu=${AVR_MCU} # AVR_MCU
-        -Os
         -std=gnu11
         -Wall # enable warnings
         -Wstrict-prototypes
